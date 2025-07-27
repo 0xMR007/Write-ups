@@ -674,7 +674,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 require_once ABSPATH . 'wp-settings.php';
 ```
 
-Bien, nous avons maintenant des identifiants ! root.sh
+Bien, nous avons maintenant des identifiants ! root:lamp.sh
 
 N'oubliez pas que nous devons trouver un processus suspect et ensuite le service qui lui est affilié.
 
