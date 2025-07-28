@@ -10,6 +10,7 @@ The goal of this repository is to:
 - Document the steps I followed to complete different challenges.
 - Share my learning process and methodologies.
 - Improve my analysis, exploitation, and technical writing skills.
+- Provide **detailed write-ups**, including commands, reasoning, and lessons learned.
 
 ## Target Platforms
 - [TryHackMe](https://tryhackme.com)

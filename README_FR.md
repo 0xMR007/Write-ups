@@ -10,6 +10,7 @@ L'objectif de ce dépôt est de :
 - Documenter les étapes que j'ai suivies pour compléter différents challenges.
 - Partager mes apprentissages et méthodologies.
 - M'améliorer en analyse, en exploitation et en rédaction technique.
+- Fournir des **write-ups détaillés**, comprenant les commandes utilisées, mes raisonnements et les notions apprises
 
 ## Plateformes Ciblées
 - [TryHackMe](https://tryhackme.com)
