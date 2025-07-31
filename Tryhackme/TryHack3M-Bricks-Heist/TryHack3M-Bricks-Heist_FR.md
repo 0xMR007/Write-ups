@@ -9,10 +9,12 @@ Voici les étapes qui seront détaillées dans ce write-up :
 - Phase de reconnaissance
 - Phase d’exploitation
 - Post-exploitation
+  
+## Informations
 
-**Type de machine** : Linux
-**Compétences mises en œuvre** : Exploitation Web, WordPress, Énumération locale, Investigation Blockchain
-**Outils utilisés** : Nmap, Ffuf, Curl, Netcat, Searchsploit, WP-scan, Wappalyzer, Pwncat, Python, Git
+- **Type de machine** : Linux
+- **Compétences mises en œuvre** : Exploitation Web, WordPress, Énumération locale, Investigation Blockchain
+- **Outils utilisés** : Nmap, Ffuf, Curl, Netcat, Searchsploit, WP-scan, Wappalyzer, Pwncat, Python, Git
 
 Cette room est idéale pour s’entraîner à : **l’énumération d’un serveur web (interne/externe)**, **l’exploitation d’un serveur web sous WordPress** et un peu à **l’investigation Blockchain**.
 

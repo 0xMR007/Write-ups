@@ -1,3 +1,29 @@
+# **TryHack3M: Bricks Heist Write up 🇬🇧**
+
+## Introduction
+
+Hey! This is my write-up of the “**TryHack3M: Bricks**” challenge — a nice dive into Wordpress exploitation and basic Bitcoin tracing.
+
+This write-up covers the exploitation of the **TryHack3M: Bricks** room on TryHackMe, which is classified as an **easy** challenge.
+
+Throughout this walkthrough, I’ll go over the common steps of pentesting:
+
+- Reconnaissance
+- Exploitation
+- Post-exploitation
+
+## Informations
+
+- **Machine type**: Linux
+
+- **Main skills tested**: Web exploitation, WordPress, Local enumeration, Blockchain investigation
+
+- **Tools used**: Nmap, Ffuf, Curl, Netcat, Searchsploit, WP-scan, Wappalyzer, Pwncat, Python, Git 
+
+This machine is a great opportunity to practice **Enumeration basics (internal/external),** **Wordpress exploitation and a bit of blockchain investigation**.
+
+Let’s dive in!
+
 ## Room setup
 
 First we can add the IP target to the `/etc/hosts`  file so it’s easier to interact with the target machine.
