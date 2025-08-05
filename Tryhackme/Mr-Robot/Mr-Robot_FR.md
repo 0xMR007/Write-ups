@@ -109,7 +109,75 @@ Tout d'abord, explorons le site web en utilisant `ffuf` pour une meilleure compr
 La sortie sera assez conséquente, mais pas de soucis, nous souhaitons seulement juste jeter un rapide coup d'œil.
 
 ```bash
-ffuf -u <http://target/FUZZ> -w /usr/share/seclists/Discovery/Web-Content/common.txt
+ffuf -u http://target/FUZZ -w /usr/share/seclists/Discovery/Web-Content/common.txt
+
+        /'___\  /'___\           /'___\       
+       /\ \__/ /\ \__/  __  __  /\ \__/       
+       \ \ ,__\\ \ ,__\/\ \/\ \ \ \ ,__\      
+        \ \ \_/ \ \ \_/\ \ \_\ \ \ \ \_/      
+         \ \_\   \ \_\  \ \____/  \ \_\       
+          \/_/    \/_/   \/___/    \/_/       
+
+       v2.1.0-dev
+________________________________________________
+
+ :: Method           : GET
+ :: URL              : http://target/FUZZ
+ :: Wordlist         : FUZZ: /usr/share/seclists/Discovery/Web-Content/common.txt
+ :: Follow redirects : false
+ :: Calibration      : false
+ :: Timeout          : 10
+ :: Threads          : 40
+ :: Matcher          : Response status: 200-299,301,302,307,401,403,405,500
+________________________________________________
+
+.htpasswd               [Status: 403, Size: 218, Words: 16, Lines: 10, Duration: 108ms]
+.hta                    [Status: 403, Size: 213, Words: 16, Lines: 10, Duration: 115ms]
+.htaccess               [Status: 403, Size: 218, Words: 16, Lines: 10, Duration: 120ms]
+0                       [Status: 301, Size: 0, Words: 1, Lines: 1, Duration: 350ms]
+Image                   [Status: 301, Size: 0, Words: 1, Lines: 1, Duration: 296ms]
+admin                   [Status: 301, Size: 228, Words: 14, Lines: 8, Duration: 78ms]
+audio                   [Status: 301, Size: 228, Words: 14, Lines: 8, Duration: 118ms]
+atom                    [Status: 301, Size: 0, Words: 1, Lines: 1, Duration: 166ms]
+blog                    [Status: 301, Size: 227, Words: 14, Lines: 8, Duration: 77ms]
+css                     [Status: 301, Size: 226, Words: 14, Lines: 8, Duration: 68ms]
+dashboard               [Status: 302, Size: 0, Words: 1, Lines: 1, Duration: 279ms]
+favicon.ico             [Status: 200, Size: 0, Words: 1, Lines: 1, Duration: 371ms]
+feed                    [Status: 301, Size: 0, Words: 1, Lines: 1, Duration: 314ms]
+images                  [Status: 301, Size: 229, Words: 14, Lines: 8, Duration: 74ms]
+image                   [Status: 301, Size: 0, Words: 1, Lines: 1, Duration: 330ms]
+index.html              [Status: 200, Size: 1104, Words: 189, Lines: 31, Duration: 76ms]
+index.php               [Status: 301, Size: 0, Words: 1, Lines: 1, Duration: 372ms]
+js                      [Status: 301, Size: 225, Words: 14, Lines: 8, Duration: 73ms]
+license                 [Status: 200, Size: 309, Words: 25, Lines: 157, Duration: 130ms]
+login                   [Status: 302, Size: 0, Words: 1, Lines: 1, Duration: 267ms]
+intro                   [Status: 200, Size: 516314, Words: 2076, Lines: 2028, Duration: 113ms]
+page1                   [Status: 301, Size: 0, Words: 1, Lines: 1, Duration: 318ms]
+phpmyadmin              [Status: 403, Size: 94, Words: 14, Lines: 1, Duration: 85ms]
+readme                  [Status: 200, Size: 64, Words: 14, Lines: 2, Duration: 92ms]
+rdf                     [Status: 301, Size: 0, Words: 1, Lines: 1, Duration: 329ms]
+render/https://www.google.com [Status: 301, Size: 0, Words: 1, Lines: 1, Duration: 323ms]
+robots.txt              [Status: 200, Size: 41, Words: 2, Lines: 4, Duration: 71ms]
+robots                  [Status: 200, Size: 41, Words: 2, Lines: 4, Duration: 71ms]
+rss                     [Status: 301, Size: 0, Words: 1, Lines: 1, Duration: 278ms]
+rss2                    [Status: 301, Size: 0, Words: 1, Lines: 1, Duration: 289ms]
+sitemap                 [Status: 200, Size: 0, Words: 1, Lines: 1, Duration: 182ms]
+sitemap.xml             [Status: 200, Size: 0, Words: 1, Lines: 1, Duration: 168ms]
+video                   [Status: 301, Size: 228, Words: 14, Lines: 8, Duration: 980ms]
+wp-admin                [Status: 301, Size: 231, Words: 14, Lines: 8, Duration: 100ms]
+wp-content              [Status: 301, Size: 233, Words: 14, Lines: 8, Duration: 75ms]
+wp-includes             [Status: 301, Size: 234, Words: 14, Lines: 8, Duration: 116ms]
+wp-config               [Status: 200, Size: 0, Words: 1, Lines: 1, Duration: 290ms]
+wp-cron                 [Status: 200, Size: 0, Words: 1, Lines: 1, Duration: 295ms]
+wp-login                [Status: 200, Size: 2564, Words: 115, Lines: 53, Duration: 382ms]
+wp-load                 [Status: 200, Size: 0, Words: 1, Lines: 1, Duration: 395ms]
+wp-links-opml           [Status: 200, Size: 227, Words: 13, Lines: 11, Duration: 396ms]
+wp-signup               [Status: 302, Size: 0, Words: 1, Lines: 1, Duration: 323ms]
+wp-mail                 [Status: 500, Size: 3064, Words: 212, Lines: 110, Duration: 377ms]
+wp-settings             [Status: 500, Size: 0, Words: 1, Lines: 1, Duration: 324ms]
+xmlrpc.php              [Status: 405, Size: 42, Words: 6, Lines: 1, Duration: 707ms]
+xmlrpc                  [Status: 405, Size: 42, Words: 6, Lines: 1, Duration: 721ms]
+:: Progress: [4746/4746] :: Job [1/1] :: 122 req/sec :: Duration: [0:00:41] :: Errors: 0 ::
 ```
 
 À partir de ce résultat, on peut noter certaines informations importantes:
