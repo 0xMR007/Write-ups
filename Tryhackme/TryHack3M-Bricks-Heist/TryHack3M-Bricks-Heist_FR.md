@@ -20,7 +20,7 @@ Cette room est idéale pour s’entraîner à : **l’énumération d’un serve
 
 C’est parti !
 
-## Préparation de la room
+## Préparation
 
 Pour commencer, on peut ajouter l’IP de la machine cible au fichier `/etc/hosts` pour faciliter nos futures interactions avec la machine.
 
