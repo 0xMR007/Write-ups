@@ -589,7 +589,7 @@ nmap> cat /root/key-3-of-3.txt
 
 ```
 
-Parfait ! Nous avons maintenant réussi à mettre à niveau nos privilèges et obtenu un accès root à la machine cible 🥳
+P-A-R-F-A-I-T ! Nous avons maintenant réussi à mettre à niveau nos privilèges et obtenu un accès root à la machine cible 🥳
 
 La 3ème clé est : `04787ddef27c3dee1ee161b21670b4e4`
 
