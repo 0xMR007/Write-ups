@@ -313,7 +313,7 @@ Après avoir regardé autour, tout ce que j'ai trouvé était :
 - Il y a deux utilisateurs : **elliot** qui est administrateur et **mich05654** juste un abonné
 - Nous semblons avoir un accès complet : nous pouvons donc ajouter des thèmes, des plugins, etc.
 
-La première chose à laquelle j'ai pensé était d’envoyer un plugin/thème malveillant pour obtenir un shell inverse sur la machine cible.
+La première chose à laquelle j'ai pensé était d’envoyer un plugin/thème malveillant pour obtenir un reverse shell sur la machine cible.
 
 Créons d'abord notre fichier malveillant.
 
@@ -342,7 +342,7 @@ N'oubliez pas de compléter les champs suivants : **ATTACKER_IP, PORT**
 
 Ensuite, nous configurons notre écouteur pwncat pour obtenir un reverse shell propre et mis à niveau.
 
-**Note :** Vous pouvez également utiliser netcat et le mettre à niveau vous-même en utilisant netcat et le lien suivant [Mettre à niveau un shell inverse](https://blog.ropnop.com/upgrading-simple-shells-to-fully-interactive-ttys/) mais personnellement, je préfère utiliser pwncat
+**Note :** Vous pouvez également utiliser netcat et le mettre à niveau vous-même en utilisant netcat et le lien suivant [Mettre à niveau un reverse shell](https://blog.ropnop.com/upgrading-simple-shells-to-fully-interactive-ttys/) mais personnellement, je préfère utiliser pwncat
 
 ```bash
 pwncat -lp 4444
@@ -529,7 +529,7 @@ pwncat -lp 4433
 (remote) robot@ip-10-10-135-61:/home/robot$
 ```
 
-Nous avons finalement obtenu notre shell inverse entièrement fonctionnel.
+Nous avons finalement obtenu notre reverse shell entièrement fonctionnel.
 
 Maintenant, en tant qu'utilisateur robot, nous ne pouvons pas faire grand-chose → nous devons escalader nos privilèges.
 
