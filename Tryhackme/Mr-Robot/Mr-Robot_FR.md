@@ -150,7 +150,7 @@ En utilisant un navigateur et en allant sur `http://target/` ou `https://target/
 
 Tout d'abord, explorons le site web en utilisant `ffuf` pour une meilleure compréhension du serveur web.
 
-La sortie sera assez conséquente, mais pas de soucis, nous souhaitons seulement juste jeter un rapide coup d'œil.
+La sortie sera assez conséquente, mais pas de soucis, nous souhaitons seulement jeter un rapide coup d'œil.
 
 ```bash
 ffuf -u http://target/FUZZ -w /usr/share/seclists/Discovery/Web-Content/common.txt
@@ -242,7 +242,7 @@ Voyons si nous pouvons accéder à ceux-ci en utilisant notre navigateur.
 
 Parfait ! Nous avons obtenu notre première clé → `073403c8a58a1f80d943455fb30724b9` facile, non ?
 
-En vérifiant l'autre fichier, il semble être un fichier dictionnaire ou une liste de mots → Il pourrait être utile pour une attaque par bruteforce → Téléchargeons-le en utilisant curl au cas où.
+En vérifiant l'autre fichier, il semble être un fichier de type dictionnaire ou wordlist → Il pourrait être utile pour une attaque par bruteforce → Téléchargeons-le en utilisant curl au cas où.
 
 ```bash
 curl <http://target/fsocity.dic> -o fsocity.dic

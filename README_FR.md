@@ -25,6 +25,12 @@ Chaque write-up sera placé dans un dossier séparé avec le nom du challenge ou
 ## Avertissement
 Ce dépôt est à but **éducatif uniquement**. Ne reproduisez jamais ces techniques sans autorisation légale explicite.
 
+## Remarque sur les adresses IP
+<p>
+Veuillez noter que les adresses IP indiquées dans les descriptions peuvent varier d'une session à l'autre. En effet, je ne relève pas toujours les défis en une seule fois : les machines sont redémarrées et les adresses IP dynamiques sont réattribuées à chaque fois.
+Concentrez-vous sur la méthodologie, et non sur les adresses IP exactes. Vérifiez toujours l'adresse IP actuelle attribuée à votre instance lorsque vous suivez les étapes.
+</p>
+
 ---
 
 *Bon apprentissage et bon hacking (éthique) !*
