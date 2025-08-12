@@ -34,6 +34,14 @@ Tout d'abord, nous pouvons ajouter l'adresse IP cible au fichier `/etc/hosts` po
 echo "10.10.135.61 target" | sudo tee -a /etc/hosts
 ```
 
+Ou avec nano :
+
+```bash
+sudo nano /etc/hosts
+
+10.10.135.61 target # Ajoutez cette ligne
+```
+
 Cela nous permet d'accéder à l'adresse IP `10.10.135.61` via le nom suivant : `target`
 
 ---

@@ -36,7 +36,7 @@ echo "10.10.135.61 target" | sudo tee -a /etc/hosts
 or using nano write the following:
 
 ```bash
-nano /etc/hosts
+sudo nano /etc/hosts
 
 10.10.135.61 target # Add this line
 ```
